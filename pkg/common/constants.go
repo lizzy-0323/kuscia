@@ -84,6 +84,9 @@ const (
 
 const (
 	KusciaControllerManagerLeaseName = "kuscia-controller-manager"
+
+	// ResourceBandwidth represents bandwidth resource name
+	ResourceBandwidth = "bandwidth"
 )
 
 type LoadBalancerType string

@@ -1,0 +1,41 @@
+apiVersion: kuscia.secretflow/v1alpha1
+kind: KusciaTask
+metadata:
+  name: bandwidth-request-example
+spec:
+  initiator: alice
+  parties:
+  - domainID: alice
+    role: host
+    template:
+      spec:
+        containers:
+        - name: task-container
+          image: secretflow/secretflow-anolis8:latest
+          command: ["python3", "-c", "print('Hello, world!')"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+              bandwidth: 500Mi # Request 500 Mbps bandwidth
+            limits:
+              cpu: 200m
+              memory: 200Mi
+              bandwidth: 1Gi # Limit bandwidth to 1 Gbps
+  - domainID: bob
+    role: guest
+    template:
+      spec:
+        containers:
+        - name: task-container
+          image: secretflow/secretflow-anolis8:latest
+          command: ["python3", "-c", "print('Hello, world!')"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+              bandwidth: 300Mi # Request 300 Mbps bandwidth
+            limits:
+              cpu: 200m
+              memory: 200Mi
+              bandwidth: 800Mi # Limit bandwidth to 800 Mbps

@@ -78,11 +78,12 @@ type AgentLogCfg struct {
 }
 
 type CapacityCfg struct {
-	CPU              string `yaml:"cpu"`
-	Memory           string `yaml:"memory"`
-	Pods             string `yaml:"pods"`
-	Storage          string `yaml:"storage"`
-	EphemeralStorage string `yaml:"ephemeralStorage"`
+	CPU               string `yaml:"cpu"`
+	Memory            string `yaml:"memory"`
+	Pods              string `yaml:"pods"`
+	Storage           string `yaml:"storage"`
+	EphemeralStorage  string `yaml:"ephemeralStorage"`
+	BandwidthCapacity string `yaml:"bandwidthCapacity"`
 }
 
 type ReservedResourcesCfg struct {
@@ -287,7 +288,8 @@ func DefaultStaticAgentConfig() *AgentConfig {
 		DiskPressurePath: path.Join(common.DefaultKusciaHomePath(), common.DefaultDomainDataSourceLocalFSPath),
 
 		Capacity: CapacityCfg{
-			Pods: defaultPodsCapacity,
+			Pods:              defaultPodsCapacity,
+			BandwidthCapacity: "1Gi", // 默认带宽容量，1Gbps
 		},
 		ReservedResources: ReservedResourcesCfg{
 			CPU:    DefaultReservedCPU,

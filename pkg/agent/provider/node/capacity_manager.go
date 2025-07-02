@@ -49,6 +49,9 @@ type CapacityManager struct {
 	podTotal     resource.Quantity
 	podAvailable resource.Quantity
 
+	bandwidthTotal     resource.Quantity
+	bandwidthAvailable resource.Quantity
+
 	cgroupCPUQuota    *int64
 	cgroupCPUPeriod   *uint64
 	cgroupMemoryLimit *int64
@@ -102,6 +105,10 @@ func NewCapacityManager(runtime string, cfg *config.CapacityCfg, reservedResCfg 
 			pa.storageAvailable = *resource.NewQuantity(int64(storageStat.Free), resource.BinarySI)
 			pa.storageTotal = *resource.NewQuantity(int64(storageStat.Total), resource.BinarySI)
 		}
+
+		if cfg.BandwidthCapacity == "" {
+			// TODO: get bandwidth capacity from os
+		}
 	}
 
 	if pa.cpuTotal.IsZero() || pa.cpuAvailable.IsZero() {
@@ -136,13 +143,26 @@ func NewCapacityManager(runtime string, cfg *config.CapacityCfg, reservedResCfg 
 	}
 
 	if pa.storageTotal.IsZero() || pa.storageAvailable.IsZero() {
-		storageQuantity, err := resource.ParseQuantity(cfg.Storage)
+		storage, err := resource.ParseQuantity(cfg.Storage)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse storage %q, detail-> %v", cfg.Storage, err)
 		}
+		if pa.storageTotal.IsZero() {
+			pa.storageTotal = storage.DeepCopy()
+		}
+		if pa.storageAvailable.IsZero() {
+			pa.storageAvailable = storage.DeepCopy()
+		}
+	}
 
-		pa.storageTotal = storageQuantity.DeepCopy()
-		pa.storageAvailable = storageQuantity.DeepCopy()
+	if cfg.BandwidthCapacity != "" {
+		bandwidthCapacity, err := resource.ParseQuantity(cfg.BandwidthCapacity)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse bandwidth %q, detail-> %v", cfg.BandwidthCapacity, err)
+		}
+		pa.bandwidthTotal = bandwidthCapacity.DeepCopy()
+		pa.bandwidthAvailable = bandwidthCapacity.DeepCopy()
+		nlog.Infof("Node bandwidth capacity configured: %s", bandwidthCapacity.String())
 	}
 
 	if cfg.EphemeralStorage != "" {
@@ -238,6 +258,10 @@ func (pa *CapacityManager) Capacity() v1.ResourceList {
 	if pa.ephemeralStorageTotal != nil {
 		rl[v1.ResourceEphemeralStorage] = *pa.ephemeralStorageTotal
 	}
+	// 添加带宽资源
+	if !pa.bandwidthTotal.IsZero() {
+		rl["bandwidth"] = pa.bandwidthTotal
+	}
 	return rl
 }
 
@@ -250,6 +274,10 @@ func (pa *CapacityManager) Allocatable() v1.ResourceList {
 	}
 	if pa.ephemeralStorageAvailable != nil {
 		rl[v1.ResourceEphemeralStorage] = *pa.ephemeralStorageAvailable
+	}
+	// 添加带宽资源
+	if !pa.bandwidthAvailable.IsZero() {
+		rl["bandwidth"] = pa.bandwidthAvailable
 	}
 	return rl
 }
